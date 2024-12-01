@@ -56,11 +56,11 @@ resource "libvirt_cloudinit_disk" "webserver-cloudinit" {
   #cloud-config
     hostname: webserver
     users:
-      - name: web
+      - name: root
         groups: sudo
         sudo: ALL=(ALL) NOPASSWD:ALL
         shell: /bin/bash
-        plain_text_passwd: "web"
+        plain_text_passwd: "123"
         lock_passwd: false
         ssh_authorized_keys:
           - ${file("~/.ssh/id_rsa.pub")}
@@ -89,11 +89,11 @@ resource "libvirt_cloudinit_disk" "dbserver-cloudinit" {
   #cloud-config
     hostname: dbserver
     users:
-      - name: db
+      - name: root
         groups: sudo
         sudo: ALL=(ALL) NOPASSWD:ALL
         shell: /bin/bash
-        plain_text_passwd: "db"
+        plain_text_passwd: "123"
         lock_passwd: false
         ssh_authorized_keys:
           - ${file("~/.ssh/id_rsa.pub")}
@@ -187,4 +187,26 @@ output "webvm_ip" {
 
 output "dbvm_ip" {
   value = libvirt_domain.dbvm.network_interface.0.addresses[0]
+}
+
+output "webvm_hostname" {
+  value = libvirt_domain.webvm.name
+}
+
+output "dbvm_hostname" {
+  value = libvirt_domain.dbvm.name
+}
+
+
+resource "null_resource" "create_ansible_inventory" {
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "[webserver]" >> ansible_inventory.ini
+      echo "webvm ansible_host=${libvirt_domain.webvm.network_interface.0.addresses[0]} ansible_user=root" >> ansible_inventory.ini
+      echo "" >> ansible_inventory.ini
+      echo "[dbserver]" >> ansible_inventory.ini
+      echo "dbvm ansible_host=${libvirt_domain.dbvm.network_interface.0.addresses[0]} ansible_user=root" >> ansible_inventory.ini
+    EOT
+  }
+  depends_on = [libvirt_domain.webvm, libvirt_domain.dbvm]
 }

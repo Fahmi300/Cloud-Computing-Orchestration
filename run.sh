@@ -56,5 +56,10 @@ else
     SELINUX_DISABLED=0
 fi
 
+sudo rm ansible_inventory.ini
+
 # Run Terraform (OpenTofu) to apply the configuration
 tofu apply
+
+ansible-playbook -i ansible_inventory.ini setup/webserver-setup.yaml
+ansible-playbook -i ansible_inventory.ini setup/dbserver-setup.yaml

@@ -1,0 +1,41 @@
+---
+- name: Configure Webserver
+  hosts: webserver
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  tasks:
+    - name: Update APT repositories
+      apt:
+        update_cache: yes
+
+    - name: Install Apache and Git
+      apt:
+        name:
+          - apache2
+          - git
+        state: present
+
+    - name: Remove existing content in /var/www/html
+      file:
+        path: /var/www/html
+        state: absent
+
+    - name: Clone website repository
+      git:
+        repo: "https://github.com/rm77/web-sample-6.git"
+        dest: /var/www/html
+        force: yes
+
+    - name: Set ownership and permissions
+      file:
+        path: /var/www/html
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        recurse: yes
+
+    - name: Start and enable Apache
+      service:
+        name: apache2
+        state: started
+        enabled: true

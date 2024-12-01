@@ -1,0 +1,52 @@
+---
+- name: Configure Database Server
+  hosts: dbserver
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  tasks:
+    - name: Update APT repositories
+      apt:
+        update_cache: yes
+
+    - name: Install MySQL server and phpMyAdmin
+      apt:
+        name:
+          - mysql-server
+          - phpmyadmin
+        state: present
+
+    - name: Configure MySQL root user with password
+      mysql_user:
+        name: root
+        password: '123'
+        host: '%'
+        state: present
+        login_user: root
+        login_password: ''
+        login_host: localhost
+
+    - name: Configure phpMyAdmin
+      copy:
+        content: |
+          Alias /phpmyadmin /usr/share/phpmyadmin
+
+          <Directory /usr/share/phpmyadmin>
+              Options FollowSymLinks
+              DirectoryIndex index.php
+              Require all granted
+          </Directory>
+        dest: /etc/apache2/conf-available/phpmyadmin.conf
+
+    - name: Enable phpMyAdmin configuration
+      command: a2enconf phpmyadmin
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+
+    - name: Start and enable MySQL
+      service:
+        name: mysql
+        state: started
+        enabled: true
