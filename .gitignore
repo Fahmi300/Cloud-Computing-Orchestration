@@ -1,4 +1,5 @@
-images
-.terraform
+images/
+.terraform/
 *.tfstate
 *.tfstate.backup
+*.hcl
